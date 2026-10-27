@@ -13,7 +13,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="🛡️ حماية أحمد الشاعر"
+            android:text="🛡️ حماية مصطفى"
             android:textColor="#3b82f6"
             android:textSize="26sp"
             android:textStyle="bold"
@@ -27,56 +27,69 @@
             android:text="جاري الاتصال بالسيرفر..."
             android:textColor="#ef4444"
             android:textSize="14sp"
-            android:layout_marginBottom="30dp"/>
+            android:layout_marginBottom="20dp"/>
 
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switchCamera"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📸 حماية الكاميرا (قفل تام)"
+            android:text="📸 حماية الكاميرا"
             android:textColor="#f8fafc"
             android:textSize="16sp"
-            android:padding="12dp"
-            android:layout_marginBottom="10dp"/>
+            android:padding="12dp"/>
 
         <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switchApps"
+            android:id="@+id/switchMic"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🖼️ حماية الصور والفيديوهات"
+            android:text="🎤 حماية المايك"
             android:textColor="#f8fafc"
             android:textSize="16sp"
-            android:padding="12dp"
-            android:layout_marginBottom="10dp"/>
+            android:padding="12dp"/>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchGallery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🖼️ حماية المعرض (يتطلب إمكانية الوصول)"
+            android:textColor="#f8fafc"
+            android:textSize="16sp"
+            android:padding="12dp"/>
 
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switchNotif"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🔔 حماية الإشعارات والرسائل"
+            android:text="🔔 حماية الإشعارات"
             android:textColor="#f8fafc"
             android:textSize="16sp"
             android:padding="12dp"
-            android:layout_marginBottom="30dp"/>
+            android:layout_marginBottom="20dp"/>
 
         <Button
             android:id="@+id/btnAdmin"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="55dp"
             android:text="تفعيل صلاحيات الحماية (مطلوب)"
             android:backgroundTint="#ef4444"
             android:textColor="#ffffff"
-            android:textSize="16sp"
-            android:layout_marginBottom="15dp"/>
+            android:layout_marginBottom="10dp"/>
+
+        <Button
+            android:id="@+id/btnAccessibility"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="تفعيل إمكانية الوصول (لحماية المعرض)"
+            android:backgroundTint="#f59e0b"
+            android:textColor="#ffffff"
+            android:layout_marginBottom="10dp"/>
 
         <Button
             android:id="@+id/btnLockNow"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="55dp"
             android:text="🔒 قفل الشاشة الآن"
             android:backgroundTint="#3b82f6"
-            android:textColor="#ffffff"
-            android:textSize="16sp"/>
-
+            android:textColor="#ffffff"/>
     </LinearLayout>
 </ScrollView>

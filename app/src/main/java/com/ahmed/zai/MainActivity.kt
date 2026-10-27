@@ -4,7 +4,6 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -13,7 +12,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-// استخدمنا SwitchMaterial عشان يطابق اللي في الواجهة
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 class MainActivity : AppCompatActivity() {
@@ -21,29 +19,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // التصحيح هنا: SwitchMaterial بدل Switch
         val switchCamera = findViewById<SwitchMaterial>(R.id.switchCamera)
-        val switchApps = findViewById<SwitchMaterial>(R.id.switchApps)
+        val switchMic = findViewById<SwitchMaterial>(R.id.switchMic)
+        val switchGallery = findViewById<SwitchMaterial>(R.id.switchGallery)
         val switchNotif = findViewById<SwitchMaterial>(R.id.switchNotif)
-        
         val btnAdmin = findViewById<Button>(R.id.btnAdmin)
+        val btnAccessibility = findViewById<Button>(R.id.btnAccessibility)
         val btnLockNow = findViewById<Button>(R.id.btnLockNow)
         val statusText = findViewById<TextView>(R.id.statusText)
 
-        // طلب الصلاحيات
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
         }
-        ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_SMS, android.Manifest.permission.READ_CONTACTS, android.Manifest.permission.CAMERA), 102)
 
-        // تشغيل السيرفر في الخلفية مع حماية من الكراش
         try {
-            val intent = Intent(this, SocketService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent)
-            } else {
-                startService(intent)
-            }
+            startService(Intent(this, SocketService::class.java))
         } catch (e: Exception) {
             statusText.text = "خطأ في الخدمة: ${e.message}"
         }
@@ -51,20 +41,21 @@ class MainActivity : AppCompatActivity() {
         btnAdmin.setOnClickListener {
             val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
             intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, ComponentName(this, MyDeviceAdminReceiver::class.java))
-            intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "مطلوب لتفعيل الحماية")
             startActivity(intent)
+        }
+
+        btnAccessibility.setOnClickListener {
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
 
         btnLockNow.setOnClickListener {
             val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
             val adminComponent = ComponentName(this, MyDeviceAdminReceiver::class.java)
-            if (dpm.isAdminActive(adminComponent)) {
-                dpm.lockNow()
-            } else {
-                Toast.makeText(this, "فعّل صلاحيات الحماية الأول!", Toast.LENGTH_SHORT).show()
-            }
+            if (dpm.isAdminActive(adminComponent)) dpm.lockNow()
+            else Toast.makeText(this, "فعّل صلاحيات الحماية الأول!", Toast.LENGTH_SHORT).show()
         }
 
+        // تفعيل الكاميرا والمايك
         switchCamera.setOnCheckedChangeListener { _, isChecked ->
             val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
             val adminComponent = ComponentName(this, MyDeviceAdminReceiver::class.java)
@@ -78,13 +69,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        switchApps.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                if (!Settings.canDrawOverlays(this)) {
-                    startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        switchMic.setOnCheckedChangeListener { _, isChecked ->
+            val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+            val adminComponent = ComponentName(this, MyDeviceAdminReceiver::class.java)
+            if (dpm.isAdminActive(adminComponent)) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    dpm.setMicDisabled(adminComponent, isChecked)
                 }
-                statusText.text = "🖼️ حماية الصور شغالة"
             }
+        }
+
+        switchGallery.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            }
+            AppLockService.isGalleryLocked = isChecked
         }
 
         switchNotif.setOnCheckedChangeListener { _, isChecked ->

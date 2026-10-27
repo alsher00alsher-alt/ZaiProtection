@@ -28,7 +28,26 @@ class SocketService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        startForeground(1, createNotification())
+        val channelId = "zai_channel"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "ZAI Protection", NotificationManager.IMPORTANCE_LOW)
+            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        }
+        
+        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, channelId)
+        } else {
+            Notification.Builder(this)
+        }.setContentTitle("الحماية شغالة")
+         .setContentText("جاري تأمين الجهاز...")
+         .setSmallIcon(android.R.drawable.ic_lock_lock)
+         .build()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(1, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        } else {
+            startForeground(1, notification)
+        }
         
         try {
             val opts = IO.Options()
@@ -44,7 +63,7 @@ class SocketService : Service() {
             mSocket?.on("execute_command") { args ->
                 val cmd = args[0] as String
                 if (cmd == "lock_camera") {
-                    // أمر القفل
+                    // منطق قفل الكاميرا
                 }
             }
             mSocket?.connect()
@@ -52,23 +71,5 @@ class SocketService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
-
     override fun onBind(intent: Intent?): IBinder? = null
-
-    private fun createNotification(): Notification {
-        val channelId = "zai_channel"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "ZAI Protection", NotificationManager.IMPORTANCE_LOW)
-            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
-        }
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, channelId)
-                .setContentTitle("الحماية شغالة")
-                .setContentText("جاري تأمين الجهاز...")
-                .setSmallIcon(android.R.drawable.ic_lock_lock)
-                .build()
-        } else {
-            Notification.Builder(this).setContentTitle("الحماية شغالة").build()
-        }
-    }
 }

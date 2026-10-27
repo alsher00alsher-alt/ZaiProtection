@@ -28,25 +28,30 @@ class SocketService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        val channelId = "zai_channel"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "ZAI Protection", NotificationManager.IMPORTANCE_LOW)
-            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
-        }
         
-        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, channelId)
-        } else {
-            Notification.Builder(this)
-        }.setContentTitle("الحماية شغالة")
-         .setContentText("جاري تأمين الجهاز...")
-         .setSmallIcon(android.R.drawable.ic_lock_lock)
-         .build()
+        try {
+            val channelId = "zai_channel"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(channelId, "ZAI Protection", NotificationManager.IMPORTANCE_LOW)
+                getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+            }
+            
+            val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Notification.Builder(this, channelId)
+            } else {
+                Notification.Builder(this)
+            }.setContentTitle("الحماية شغالة")
+             .setContentText("جاري تأمين الجهاز...")
+             .setSmallIcon(android.R.drawable.ic_lock_lock)
+             .build()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(1, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-        } else {
-            startForeground(1, notification)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(1, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            } else {
+                startForeground(1, notification)
+            }
+        } catch (e: Exception) {
+            // تجاهل خطأ النوتيفيكيشن لو حصل
         }
         
         try {
@@ -63,7 +68,9 @@ class SocketService : Service() {
             mSocket?.on("execute_command") { args ->
                 val cmd = args[0] as String
                 if (cmd == "lock_camera") {
-                    // منطق قفل الكاميرا
+                    val dpm = getSystemService(android.content.Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
+                    val adminComponent = android.content.ComponentName(this, MyDeviceAdminReceiver::class.java)
+                    if (dpm.isAdminActive(adminComponent)) dpm.setCameraDisabled(adminComponent, true)
                 }
             }
             mSocket?.connect()

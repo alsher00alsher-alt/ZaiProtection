@@ -1,9 +1,11 @@
 package com.ahmed.zai
 
+import android.Manifest
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +16,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 class MainActivity : AppCompatActivity() {
@@ -28,40 +31,30 @@ class MainActivity : AppCompatActivity() {
 
         val statusText = findViewById<TextView>(R.id.statusText)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
-        }
-
+        // تشغيل خدمة السيرفر
         startService(Intent(this, SocketService::class.java))
 
-        // طلب الصلاحيات أول ما يفتح
-        checkPermissions(statusText)
-
-        // تفعيل الأدمن
-        if (!dpm.isAdminActive(adminComponent)) {
-            AlertDialog.Builder(this)
-                .setTitle("صلاحيات الحماية")
-                .setMessage("لازم تفعيل 'مشرف الجهاز' عشان نقفل الكاميرا والشاشة. اضغط موافق.")
-                .setCancelable(false)
-                .setPositiveButton("موافق") { _, _ ->
-                    startActivity(Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
-                        putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
-                    })
-                }
-                .show()
+        // أزرار طلب الصلاحيات
+        findViewById<Button>(R.id.btnAdmin).setOnClickListener {
+            if (!dpm.isAdminActive(adminComponent)) {
+                startActivity(Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                    putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
+                })
+            } else {
+                Toast.makeText(this, "مشرف الجهاز متفعل بالفعل", Toast.LENGTH_SHORT).show()
+            }
         }
 
-        // تفعيل إمكانية الوصول
-        if (!isAccessibilityServiceEnabled()) {
-            AlertDialog.Builder(this)
-                .setTitle("صلاحيات قفل التطبيقات")
-                .setMessage("لازم تفعيل 'إمكانية الوصول' عشان نقفل التطبيقات والصور. اضغط موافق وروح فعلها.")
-                .setCancelable(false)
-                .setPositiveButton("موافق") { _, _ ->
-                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                }
-                .show()
+        findViewById<Button>(R.id.btnAccessibility).setOnClickListener {
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
+
+        findViewById<Button>(R.id.btnPermissions).setOnClickListener {
+            requestRuntimePermissions()
+        }
+
+        // طلب الأذونات أول ما يفتح
+        requestRuntimePermissions()
 
         // الأزرار
         findViewById<Button>(R.id.btnLockNow).setOnClickListener {
@@ -100,7 +93,6 @@ class MainActivity : AppCompatActivity() {
             prefs.edit().putBoolean("lock_mic", isChecked).apply()
         }
 
-        // باقي السويتشات بتحفظ الحالة عشان الخدمة تقراها
         setupToggle(R.id.switchGallery, "lock_gallery")
         setupToggle(R.id.switchFiles, "lock_files")
         setupToggle(R.id.switchCalls, "lock_calls")
@@ -113,16 +105,40 @@ class MainActivity : AppCompatActivity() {
         sw.setOnCheckedChangeListener { _, b -> prefs.edit().putBoolean(key, b).apply() }
     }
 
+    private fun requestRuntimePermissions() {
+        val permissions = mutableListOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.READ_SMS)
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.READ_CONTACTS)
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.CAMERA)
+        }
+
+        if (permissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissions.toTypedArray(), 102)
+        }
+    }
+
     private fun checkPermissions(statusText: TextView) {
         val isAdmin = dpm.isAdminActive(adminComponent)
         val isAccess = isAccessibilityServiceEnabled()
-        if (isAdmin && isAccess) {
-            statusText.text = "✅ التطبيق جاهز ومحمي"
-            statusText.setTextColor(0xFF10b981.toInt())
-        } else {
-            statusText.text = "⚠️ صلاحيات ناقصة! (لازم تفعلها)"
-            statusText.setTextColor(0xFFef4444.toInt())
-        }
+        val isPerms = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
+
+        val status = StringBuilder()
+        if (isAdmin) status.append("✅ مشرف الجهاز\n") else status.append("❌ مشرف الجهاز (مطلوب)\n")
+        if (isAccess) status.append("✅ إمكانية الوصول\n") else status.append("❌ إمكانية الوصول (مطلوب)\n")
+        if (isPerms) status.append("✅ أذونات الرسايل") else status.append("❌ أذونات الرسايل")
+
+        statusText.text = status.toString()
+        statusText.setTextColor(if (isAdmin && isAccess) 0xFF10b981.toInt() else 0xFFef4444.toInt())
     }
 
     private fun isAccessibilityServiceEnabled(): Boolean {

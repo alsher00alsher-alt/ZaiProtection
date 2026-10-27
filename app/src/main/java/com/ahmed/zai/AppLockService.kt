@@ -2,6 +2,8 @@ package com.ahmed.zai
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.view.accessibility.AccessibilityEvent
 import android.widget.Toast
 
@@ -18,8 +20,11 @@ class AppLockService : AccessibilityService() {
         val isContactsLocked = prefs.getBoolean("lock_contacts", false) && packageName.contains("contacts")
 
         if (isAppLocked || isGalleryLocked || isFilesLocked || isCallsLocked || isContactsLocked) {
-            Toast.makeText(this, "⛔ تم القفل بواسطة حماية مصطفى", Toast.LENGTH_SHORT).show()
-            performGlobalAction(GLOBAL_ACTION_HOME)
+            // إضافة تأخير بسيط لضمان استلام الحدث كاملاً
+            Handler(Looper.getMainLooper()).postDelayed({
+                Toast.makeText(this, "⛔ تم القفل بواسطة حماية مصطفى", Toast.LENGTH_SHORT).show()
+                performGlobalAction(GLOBAL_ACTION_HOME)
+            }, 200)
         }
     }
     override fun onInterrupt() {}

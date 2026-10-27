@@ -11,6 +11,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        multiDexEnabled = true
     }
     buildTypes {
         release {
@@ -22,6 +23,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
+        }
+    }
 }
 
 configurations.all {
@@ -37,6 +45,10 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("io.socket:socket.io-client:2.1.0") { exclude(group = "org.json", module = "json") }
+    
+    // Socket.io مع استثناء مكتبة JSON عشان متتعارضش
+    implementation("io.socket:socket.io-client:2.1.0") {
+        exclude(group = "org.json", module = "json")
+    }
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

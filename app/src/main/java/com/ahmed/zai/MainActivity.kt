@@ -4,6 +4,7 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -55,7 +56,6 @@ class MainActivity : AppCompatActivity() {
             else Toast.makeText(this, "فعّل صلاحيات الحماية الأول!", Toast.LENGTH_SHORT).show()
         }
 
-        // تفعيل الكاميرا والمايك
         switchCamera.setOnCheckedChangeListener { _, isChecked ->
             val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
             val adminComponent = ComponentName(this, MyDeviceAdminReceiver::class.java)
@@ -69,13 +69,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // حماية المايك باستخدام كتم الصوت
         switchMic.setOnCheckedChangeListener { _, isChecked ->
-            val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-            val adminComponent = ComponentName(this, MyDeviceAdminReceiver::class.java)
-            if (dpm.isAdminActive(adminComponent)) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    dpm.setMicDisabled(adminComponent, isChecked)
-                }
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            if (isChecked) {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
+                audioManager.adjustStreamVolume(AudioManager.STREAM_VOICE_CALL, AudioManager.ADJUST_MUTE, 0)
+                statusText.text = "🎤 المايك مقفول (تم كتم الصوت)"
+            } else {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
+                audioManager.adjustStreamVolume(AudioManager.STREAM_VOICE_CALL, AudioManager.ADJUST_UNMUTE, 0)
+                statusText.text = "🎤 المايك مفتوح"
             }
         }
 

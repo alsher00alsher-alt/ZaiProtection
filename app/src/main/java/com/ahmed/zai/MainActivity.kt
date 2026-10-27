@@ -57,17 +57,19 @@ class MainActivity : AppCompatActivity() {
             }
         }, 3000)
 
+        // إصلاح ComponentName هنا ب using this@MainActivity
         btnAdmin.setOnClickListener {
-            startActivity(Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
-                putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, ComponentName(this, MyDeviceAdminReceiver::class.java))
-            })
+            val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+            intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, ComponentName(this@MainActivity, MyDeviceAdminReceiver::class.java))
+            startActivity(intent)
         }
 
         btnAccessibility.setOnClickListener { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
 
         btnLockNow.setOnClickListener {
             val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-            if (dpm.isAdminActive(ComponentName(this, MyDeviceAdminReceiver::class.java))) dpm.lockNow()
+            val adminComponent = ComponentName(this@MainActivity, MyDeviceAdminReceiver::class.java)
+            if (dpm.isAdminActive(adminComponent)) dpm.lockNow()
             else Toast.makeText(this, "فعّل صلاحيات الحماية الأول!", Toast.LENGTH_SHORT).show()
         }
 
@@ -82,8 +84,9 @@ class MainActivity : AppCompatActivity() {
         // السويتشات
         switchCamera.setOnCheckedChangeListener { _, isChecked ->
             val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-            if (dpm.isAdminActive(ComponentName(this, MyDeviceAdminReceiver::class.java))) {
-                dpm.setCameraDisabled(ComponentName(this, MyDeviceAdminReceiver::class.java), isChecked)
+            val adminComponent = ComponentName(this@MainActivity, MyDeviceAdminReceiver::class.java)
+            if (dpm.isAdminActive(adminComponent)) {
+                dpm.setCameraDisabled(adminComponent, isChecked)
                 prefs.edit().putBoolean("lock_camera", isChecked).apply()
             } else { switchCamera.isChecked = false; Toast.makeText(this, "فعّل صلاحيات الحماية!", Toast.LENGTH_SHORT).show() }
         }

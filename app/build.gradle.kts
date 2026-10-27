@@ -23,6 +23,16 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
 }
+
+configurations.all {
+    resolutionStrategy {
+        force("androidx.core:core-ktx:1.12.0")
+        force("androidx.appcompat:appcompat:1.6.1")
+        force("com.google.android.material:material:1.11.0")
+        force("androidx.fragment:fragment:1.6.2")
+    }
+}
+
 dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")

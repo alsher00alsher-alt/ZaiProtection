@@ -11,29 +11,21 @@ import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var prefs: android.content.SharedPreferences
+    private val dpm by lazy { getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager }
+    private val adminComponent by lazy { ComponentName(this, MyDeviceAdminReceiver::class.java) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        prefs = getSharedPreferences("ZaiPrefs", Context.MODE_PRIVATE)
 
-        val switchCamera = findViewById<SwitchMaterial>(R.id.switchCamera)
-        val switchMic = findViewById<SwitchMaterial>(R.id.switchMic)
-        val switchGallery = findViewById<SwitchMaterial>(R.id.switchGallery)
-        val switchFiles = findViewById<SwitchMaterial>(R.id.switchFiles)
-        val switchScreenRec = findViewById<SwitchMaterial>(R.id.switchScreenRec)
-        val switchNotif = findViewById<SwitchMaterial>(R.id.switchNotif)
-        val switchCalls = findViewById<SwitchMaterial>(R.id.switchCalls)
-        val switchContacts = findViewById<SwitchMaterial>(R.id.switchContacts)
-        
-        val btnAppProtect = findViewById<Button>(R.id.btnAppProtect)
-        val btnKiosk = findViewById<Button>(R.id.btnKiosk)
-        val btnAdmin = findViewById<Button>(R.id.btnAdmin)
-        val btnAccessibility = findViewById<Button>(R.id.btnAccessibility)
-        val btnLockNow = findViewById<Button>(R.id.btnLockNow)
         val statusText = findViewById<TextView>(R.id.statusText)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -41,69 +33,106 @@ class MainActivity : AppCompatActivity() {
         }
 
         startService(Intent(this, SocketService::class.java))
-        val prefs = getSharedPreferences("ZaiPrefs", Context.MODE_PRIVATE)
 
-        // فحص حالة الأدمن كل 3 ثواني
-        val handler = android.os.Handler(android.os.Looper.getMainLooper())
-        handler.postDelayed(object : Runnable {
-            override fun run() {
-                val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-                val adminComponent = ComponentName(this@MainActivity, MyDeviceAdminReceiver::class.java)
-                if (!dpm.isAdminActive(adminComponent)) {
-                    switchCamera.isChecked = false
-                    switchMic.isChecked = false
+        // طلب الصلاحيات أول ما يفتح
+        checkPermissions(statusText)
+
+        // تفعيل الأدمن
+        if (!dpm.isAdminActive(adminComponent)) {
+            AlertDialog.Builder(this)
+                .setTitle("صلاحيات الحماية")
+                .setMessage("لازم تفعيل 'مشرف الجهاز' عشان نقفل الكاميرا والشاشة. اضغط موافق.")
+                .setCancelable(false)
+                .setPositiveButton("موافق") { _, _ ->
+                    startActivity(Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                        putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
+                    })
                 }
-                handler.postDelayed(this, 3000)
-            }
-        }, 3000)
-
-        // إصلاح ComponentName هنا ب using this@MainActivity
-        btnAdmin.setOnClickListener {
-            val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-            intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, ComponentName(this@MainActivity, MyDeviceAdminReceiver::class.java))
-            startActivity(intent)
+                .show()
         }
 
-        btnAccessibility.setOnClickListener { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+        // تفعيل إمكانية الوصول
+        if (!isAccessibilityServiceEnabled()) {
+            AlertDialog.Builder(this)
+                .setTitle("صلاحيات قفل التطبيقات")
+                .setMessage("لازم تفعيل 'إمكانية الوصول' عشان نقفل التطبيقات والصور. اضغط موافق وروح فعلها.")
+                .setCancelable(false)
+                .setPositiveButton("موافق") { _, _ ->
+                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                }
+                .show()
+        }
 
-        btnLockNow.setOnClickListener {
-            val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-            val adminComponent = ComponentName(this@MainActivity, MyDeviceAdminReceiver::class.java)
+        // الأزرار
+        findViewById<Button>(R.id.btnLockNow).setOnClickListener {
             if (dpm.isAdminActive(adminComponent)) dpm.lockNow()
-            else Toast.makeText(this, "فعّل صلاحيات الحماية الأول!", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(this, "فعّل مشرف الجهاز الأول!", Toast.LENGTH_SHORT).show()
         }
 
-        btnAppProtect.setOnClickListener { startActivity(Intent(this, AppListActivity::class.java)) }
+        findViewById<Button>(R.id.btnAppProtect).setOnClickListener { 
+            startActivity(Intent(this, AppListActivity::class.java)) 
+        }
 
-        // قفل الهاتف بالكامل
-        btnKiosk.setOnClickListener {
+        findViewById<Button>(R.id.btnKiosk).setOnClickListener {
             startLockTask()
-            Toast.makeText(this, "تم قفل الهاتف بالكامل", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "تم قفل الهاتف بالكامل", Toast.LENGTH_SHORT).show()
         }
 
         // السويتشات
+        val switchCamera = findViewById<SwitchMaterial>(R.id.switchCamera)
+        switchCamera.isChecked = prefs.getBoolean("lock_camera", false)
         switchCamera.setOnCheckedChangeListener { _, isChecked ->
-            val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-            val adminComponent = ComponentName(this@MainActivity, MyDeviceAdminReceiver::class.java)
             if (dpm.isAdminActive(adminComponent)) {
                 dpm.setCameraDisabled(adminComponent, isChecked)
                 prefs.edit().putBoolean("lock_camera", isChecked).apply()
-            } else { switchCamera.isChecked = false; Toast.makeText(this, "فعّل صلاحيات الحماية!", Toast.LENGTH_SHORT).show() }
+            } else {
+                switchCamera.isChecked = false
+                Toast.makeText(this, "فعّل مشرف الجهاز الأول!", Toast.LENGTH_SHORT).show()
+            }
         }
 
+        val switchMic = findViewById<SwitchMaterial>(R.id.switchMic)
+        switchMic.isChecked = prefs.getBoolean("lock_mic", false)
         switchMic.setOnCheckedChangeListener { _, isChecked ->
-            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            if (isChecked) audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
-            else audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
+            val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            if (isChecked) am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
+            else am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
             prefs.edit().putBoolean("lock_mic", isChecked).apply()
         }
 
-        // حفظ باقي الحالات في الذاكرة عشان خدمة إمكانية الوصول تقراها
-        switchGallery.setOnCheckedChangeListener { _, b -> prefs.edit().putBoolean("lock_gallery", b).apply() }
-        switchFiles.setOnCheckedChangeListener { _, b -> prefs.edit().putBoolean("lock_files", b).apply() }
-        switchScreenRec.setOnCheckedChangeListener { _, b -> prefs.edit().putBoolean("lock_screenrec", b).apply() }
-        switchNotif.setOnCheckedChangeListener { _, b -> prefs.edit().putBoolean("lock_notif", b).apply() }
-        switchCalls.setOnCheckedChangeListener { _, b -> prefs.edit().putBoolean("lock_calls", b).apply() }
-        switchContacts.setOnCheckedChangeListener { _, b -> prefs.edit().putBoolean("lock_contacts", b).apply() }
+        // باقي السويتشات بتحفظ الحالة عشان الخدمة تقراها
+        setupToggle(R.id.switchGallery, "lock_gallery")
+        setupToggle(R.id.switchFiles, "lock_files")
+        setupToggle(R.id.switchCalls, "lock_calls")
+        setupToggle(R.id.switchContacts, "lock_contacts")
+    }
+
+    private fun setupToggle(id: Int, key: String) {
+        val sw = findViewById<SwitchMaterial>(id)
+        sw.isChecked = prefs.getBoolean(key, false)
+        sw.setOnCheckedChangeListener { _, b -> prefs.edit().putBoolean(key, b).apply() }
+    }
+
+    private fun checkPermissions(statusText: TextView) {
+        val isAdmin = dpm.isAdminActive(adminComponent)
+        val isAccess = isAccessibilityServiceEnabled()
+        if (isAdmin && isAccess) {
+            statusText.text = "✅ التطبيق جاهز ومحمي"
+            statusText.setTextColor(0xFF10b981.toInt())
+        } else {
+            statusText.text = "⚠️ صلاحيات ناقصة! (لازم تفعلها)"
+            statusText.setTextColor(0xFFef4444.toInt())
+        }
+    }
+
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val service = "$packageName/${AppLockService::class.java.canonicalName}"
+        val enabledServices = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: return false
+        return enabledServices.contains(service)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkPermissions(findViewById(R.id.statusText))
     }
 }

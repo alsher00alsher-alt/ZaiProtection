@@ -12,13 +12,12 @@ class AppLockService : AccessibilityService() {
         val prefs = getSharedPreferences("ZaiPrefs", Context.MODE_PRIVATE)
 
         val isAppLocked = prefs.getBoolean("lock_$packageName", false)
-        val isGalleryLocked = prefs.getBoolean("lock_gallery", false) && (packageName.contains("gallery") || packageName.contains("photos"))
+        val isGalleryLocked = prefs.getBoolean("lock_gallery", false) && (packageName.contains("gallery") || packageName.contains("photos") || packageName.contains("miui.gallery"))
         val isFilesLocked = prefs.getBoolean("lock_files", false) && packageName.contains("documentsui")
-        val isScreenRecLocked = prefs.getBoolean("lock_screenrec", false) && packageName.contains("screenrec")
-        val isCallsLocked = prefs.getBoolean("lock_calls", false) && packageName.contains("dialer")
+        val isCallsLocked = prefs.getBoolean("lock_calls", false) && (packageName.contains("dialer") || packageName.contains("phone"))
         val isContactsLocked = prefs.getBoolean("lock_contacts", false) && packageName.contains("contacts")
 
-        if (isAppLocked || isGalleryLocked || isFilesLocked || isScreenRecLocked || isCallsLocked || isContactsLocked) {
+        if (isAppLocked || isGalleryLocked || isFilesLocked || isCallsLocked || isContactsLocked) {
             Toast.makeText(this, "⛔ تم القفل بواسطة حماية مصطفى", Toast.LENGTH_SHORT).show()
             performGlobalAction(GLOBAL_ACTION_HOME)
         }

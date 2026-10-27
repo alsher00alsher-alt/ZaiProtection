@@ -7,7 +7,6 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.os.Build
 import android.os.IBinder
-import android.os.SystemClock
 import io.socket.client.IO
 import io.socket.client.Socket
 import org.json.JSONObject
@@ -43,6 +42,7 @@ class SocketService : Service() {
         try {
             val opts = IO.Options()
             opts.reconnection = true
+            // الرابط بتاع السيرفر بتاعك
             mSocket = IO.socket("https://zai-proxy-production-861f.up.railway.app", opts)
             
             mSocket?.on(Socket.EVENT_CONNECT) {
@@ -64,17 +64,6 @@ class SocketService : Service() {
             }
             mSocket?.connect()
         } catch (e: URISyntaxException) {}
-    }
-
-    // إعادة تشغيل الخدمة لو قفلت
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        val restartServiceIntent = Intent(applicationContext, this.javaClass)
-        restartServiceIntent.setPackage(packageName)
-        val restartServicePendingIntent = PendingIntent.getService(applicationContext, 1, restartServiceIntent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
-        val alarmService = applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        // إصلاح SystemClock هنا
-        alarmService.set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 1000, restartServicePendingIntent)
-        super.onTaskRemoved(rootIntent)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY

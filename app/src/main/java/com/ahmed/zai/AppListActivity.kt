@@ -3,7 +3,6 @@ package com.ahmed.zai
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -45,23 +44,11 @@ class AppAdapter(private val context: Context, private val apps: List<Applicatio
         view.findViewById<TextView>(R.id.appName).text = appInfo.loadLabel(pm)
         
         val switch = view.findViewById<SwitchMaterial>(R.id.appSwitch)
-        switch.setOnCheckedChangeListener(null) // remove listener before setting state
+        switch.setOnCheckedChangeListener(null)
         switch.isChecked = prefs.getBoolean("lock_${appInfo.packageName}", false)
         
         switch.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                // إظهار رسالة تأكيد
-                android.app.AlertDialog.Builder(context)
-                    .setTitle("حماية مصطفى")
-                    .setMessage("هل تود حماية تطبيق (${appInfo.loadLabel(pm)})؟ لن تتمكن من فتحه إلا بعد إلغاء الحماية.")
-                    .setPositiveButton("نعم") { _, _ ->
-                        prefs.edit().putBoolean("lock_${appInfo.packageName}", true).apply()
-                    }
-                    .setNegativeButton("لا") { _, _ -> switch.isChecked = false }
-                    .show()
-            } else {
-                prefs.edit().putBoolean("lock_${appInfo.packageName}", false).apply()
-            }
+            prefs.edit().putBoolean("lock_${appInfo.packageName}", isChecked).apply()
         }
         return view
     }

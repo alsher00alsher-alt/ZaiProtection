@@ -42,70 +42,20 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- أزرار الحماية -->
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switchCamera"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="📸 حماية الكاميرا"
-            android:textColor="#f8fafc"
-            android:textSize="18sp"
-            android:padding="12dp"
-            android:layout_marginBottom="8dp"/>
-
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switchMic"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="🎤 حماية المايك"
-            android:textColor="#f8fafc"
-            android:textSize="18sp"
-            android:padding="12dp"
-            android:layout_marginBottom="20dp"/>
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchCamera" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="📸 حماية الكاميرا" android:textColor="#f8fafc" android:padding="10dp"/>
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchMic" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🎤 حماية المايك" android:textColor="#f8fafc" android:padding="10dp"/>
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchGallery" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🖼️ حماية الصور والفيديوهات" android:textColor="#f8fafc" android:padding="10dp"/>
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchFiles" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="📁 حماية الملفات" android:textColor="#f8fafc" android:padding="10dp"/>
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchScreenRec" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="📹 حماية تصوير الشاشة" android:textColor="#f8fafc" android:padding="10dp"/>
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchNotif" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🔔 حماية الإشعارات" android:textColor="#f8fafc" android:padding="10dp"/>
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchCalls" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="📞 حماية المكالمات" android:textColor="#f8fafc" android:padding="10dp"/>
+        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchContacts" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="👥 حماية جهات الاتصال" android:textColor="#f8fafc" android:padding="10dp" android:layout_marginBottom="15dp"/>
 
         <!-- أزرار الأوامر -->
-        <Button
-            android:id="@+id/btnAppProtect"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:text="📱 حماية التطبيقات"
-            android:backgroundTint="#3b82f6"
-            android:textColor="#ffffff"
-            android:layout_marginBottom="10dp"/>
-
-        <Button
-            android:id="@+id/btnLogs"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:text="⚠️ قاعدة البيانات (السجلات)"
-            android:backgroundTint="#f59e0b"
-            android:textColor="#ffffff"
-            android:layout_marginBottom="10dp"/>
-
-        <Button
-            android:id="@+id/btnAdmin"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:text="تفعيل صلاحيات الحماية (مطلوب)"
-            android:backgroundTint="#ef4444"
-            android:textColor="#ffffff"
-            android:layout_marginBottom="10dp"/>
-
-        <Button
-            android:id="@+id/btnAccessibility"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:text="تفعيل إمكانية الوصول (مطلوب)"
-            android:backgroundTint="#8b5cf6"
-            android:textColor="#ffffff"
-            android:layout_marginBottom="10dp"/>
-            
-        <Button
-            android:id="@+id/btnLockNow"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:text="🔒 قفل الشاشة الآن"
-            android:backgroundTint="#10b981"
-            android:textColor="#ffffff"/>
-
+        <Button android:id="@+id/btnAppProtect" android:layout_width="match_parent" android:layout_height="55dp" android:text="📱 حماية التطبيقات" android:backgroundTint="#3b82f6" android:textColor="#ffffff" android:layout_marginBottom="10dp"/>
+        <Button android:id="@+id/btnKiosk" android:layout_width="match_parent" android:layout_height="55dp" android:text="🔒 قفل الهاتف بالكامل (Kiosk)" android:backgroundTint="#f59e0b" android:textColor="#ffffff" android:layout_marginBottom="10dp"/>
+        <Button android:id="@+id/btnAdmin" android:layout_width="match_parent" android:layout_height="55dp" android:text="تفعيل صلاحيات الحماية" android:backgroundTint="#ef4444" android:textColor="#ffffff" android:layout_marginBottom="10dp"/>
+        <Button android:id="@+id/btnAccessibility" android:layout_width="match_parent" android:layout_height="55dp" android:text="تفعيل إمكانية الوصول" android:backgroundTint="#8b5cf6" android:textColor="#ffffff" android:layout_marginBottom="10dp"/>
+        <Button android:id="@+id/btnLockNow" android:layout_width="match_parent" android:layout_height="55dp" android:text="🔒 قفل الشاشة الآن" android:backgroundTint="#10b981" android:textColor="#ffffff"/>
     </LinearLayout>
 </ScrollView>

